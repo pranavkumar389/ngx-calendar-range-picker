@@ -35,7 +35,7 @@
 <div class="row">
   <div class="col s12">
       <h3>Inline daterangepicker</h3>
-      <ngx-daterangepicker-material (choosedDate)="choosedDate($event)" [locale]="{applyLabel: 'Done', firstDay: 1}"></ngx-daterangepicker-material>
+      <ngx-datetimerangepicker (choosedDate)="choosedDate($event)" [locale]="{applyLabel: 'Done', firstDay: 1}"></ngx-datetimerangepicker>
       <br>
       Choosed date: {{inlineDate | json}}
   </div>
@@ -44,14 +44,14 @@
 <div class="row">
   <div class="col s12">
     <h3>Inline daterangepicker with time and auto-apply</h3>
-    <ngx-daterangepicker-material (choosedDate)="choosedDateTime($event)"
+    <ngx-datetimerangepicker (choosedDate)="choosedDateTime($event)"
                                   [autoApply]="true"
                                   [timePicker24Hour]="true"
                                   [linkedCalendars]="true"
                                   [startDate]="selected?.startDate"
                                   [endDate]="selected?.endDate"
                                   [timePicker]="true"
-                                  [locale]="{applyLabel: 'Done', firstDay: 1}"></ngx-daterangepicker-material>
+                                  [locale]="{applyLabel: 'Done', firstDay: 1}"></ngx-datetimerangepicker>
     <br>
     <p>Choosed date (after changes): {{inlineDateTime | json}}</p>
   </div>
