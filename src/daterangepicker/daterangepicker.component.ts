@@ -1291,4 +1291,18 @@ export class DaterangepickerComponent implements OnInit {
             this.calendarVariables[side].classes[row].classList = rowClasses.join(' ');
         }
     }
+
+    /**
+     * Determines whether the calendar cell at the provided position should be marked as selected
+     * for accessibility purposes. A cell is considered selected if it has either the 'active'
+     * or 'in-range' class applied by the calendar rendering logic.
+     */
+    isAriaSelected(side: SideEnum, row: number, col: number): boolean {
+        const sideVars = this.calendarVariables?.[side];
+        if (!sideVars || !sideVars.classes || !sideVars.classes[row] || !sideVars.classes[row][col]) {
+            return false;
+        }
+        const cls: string = sideVars.classes[row][col] as string;
+        return cls.includes('active') || cls.includes('in-range');
+    }
 }
