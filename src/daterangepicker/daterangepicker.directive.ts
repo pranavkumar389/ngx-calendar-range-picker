@@ -29,6 +29,8 @@ const moment = _moment;
   selector: 'input[ngxDaterangepickerMd]',
   host: {
     '(keyup.esc)': 'hide()',
+    '(keydown.alt.ArrowDown)': 'open()',
+    '(keydown.alt.ArrowUp)': 'hide()',
     '(blur)': 'onBlur()',
     '(click)': 'open()',
     '(keyup)': 'inputChanged($event)'

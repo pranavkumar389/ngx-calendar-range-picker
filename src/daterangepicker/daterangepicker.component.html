@@ -1,6 +1,6 @@
 <div
   class="md-drppicker"
-  #pickerContainer
+  #pickerContainer cdkTrapFocus [cdkTrapFocusAutoCapture]="!inline"
   [ngClass]="{
     ltr: locale.direction === 'ltr',
     rtl: this.locale.direction === 'rtl',
@@ -52,9 +52,11 @@
               "
             >
               <th
-                role="button"
+                role="button" tabindex="0"
                 aria-label="Previous month"
                 (click)="clickPrev(sideEnum.left)"
+                (keydown.enter)="clickPrev(sideEnum.left)"
+                (keydown.space)="clickPrev(sideEnum.left)"
                 class="prev available"
               ></th>
             </ng-container>
@@ -144,10 +146,12 @@
               "
             >
               <th
-                role="button"
+                role="button" tabindex="0"
                 aria-label="Next month"
-                class="next available"
                 (click)="clickNext(sideEnum.left)"
+                (keydown.enter)="clickNext(sideEnum.left)"
+                (keydown.space)="clickNext(sideEnum.left)"
+                class="next available"
               ></th>
             </ng-container>
             <ng-container
@@ -191,12 +195,14 @@
             <!-- cal -->
             <td
               role="gridcell"
+              [attr.tabindex]="getTabIndex(sideEnum.left, row, col)"
               *ngFor="let col of calendarVariables.left.calCols"
               [class]="calendarVariables.left.classes[row][col]"
               (click)="clickDate($event, sideEnum.left, row, col)"
               (mouseenter)="hoverDate($event, sideEnum.left, row, col)"
-              [attr.aria-selected]="isAriaSelected(sideEnum.left, row, col)"
-            >
+              (keydown)="handleDayKeydown($event, sideEnum.left, row, col)"
+              [attr.data-side]="'left'" [attr.data-row]="row" [attr.data-col]="col"
+              >
               <span>{{
                 calendarVariables.left.calendar[row][col].date()
               }}</span>
@@ -304,9 +310,11 @@
               "
             >
               <th
-                role="button"
+                role="button" tabindex="0"
                 aria-label="Previous month"
                 (click)="clickPrev(sideEnum.right)"
+                (keydown.enter)="clickPrev(sideEnum.right)"
+                (keydown.space)="clickPrev(sideEnum.right)"
                 class="prev available"
               ></th>
             </ng-container>
@@ -398,10 +406,12 @@
               "
             >
               <th
-                role="button"
+                role="button" tabindex="0"
                 aria-label="Next month"
-                class="next available"
                 (click)="clickNext(sideEnum.right)"
+                (keydown.enter)="clickNext(sideEnum.right)"
+                (keydown.space)="clickNext(sideEnum.right)"
+                class="next available"
               ></th>
             </ng-container>
             <ng-container
@@ -444,12 +454,14 @@
             </td>
             <td
               role="gridcell"
+              [attr.tabindex]="getTabIndex(sideEnum.right, row, col)"
               *ngFor="let col of calendarVariables.right.calCols"
               [class]="calendarVariables.right.classes[row][col]"
               (click)="clickDate($event, sideEnum.right, row, col)"
               (mouseenter)="hoverDate($event, sideEnum.right, row, col)"
-              [attr.aria-selected]="isAriaSelected(sideEnum.right, row, col)"
-            >
+              (keydown)="handleDayKeydown($event, sideEnum.right, row, col)"
+              [attr.data-side]="'right'" [attr.data-row]="row" [attr.data-col]="col"
+              >
               <span>{{
                 calendarVariables.right.calendar[row][col].date()
               }}</span>

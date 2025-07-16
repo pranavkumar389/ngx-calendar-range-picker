@@ -1042,6 +1042,45 @@ export class DaterangepickerComponent implements OnInit {
         this._old.end = this.endDate.clone();
         this.isShown = true;
         this.updateView();
+
+        // After calendar is rendered, move focus to the selected start day for better keyboard UX
+        setTimeout(() => this.focusSelectedStartDateCell());
+    }
+
+    /**
+     * Puts keyboard focus on the cell that represents the currently selected start date.
+     * Works only when popup mode (not inline).
+     */
+    private focusSelectedStartDateCell(): void {
+        if (this.inline) {
+            return; // don't steal focus in inline mode
+        }
+
+        const tryFocus = (side: SideEnum): boolean => {
+            const calVars = this.calendarVariables?.[side];
+            if (!calVars || !calVars.calendar) {
+                return false;
+            }
+            for (const rowIdx of calVars.calRows) {
+                for (const colIdx of calVars.calCols) {
+                    const cellDate = calVars.calendar[rowIdx][colIdx];
+                    if (cellDate && this.startDate && cellDate.isSame(this.startDate, 'day')) {
+                        const selector = `[data-side="${side}"][data-row="${rowIdx}"][data-col="${colIdx}"]`;
+                        const cell: HTMLElement | null = this.pickerContainer?.nativeElement.querySelector(selector);
+                        if (cell) {
+                            cell.focus();
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        };
+
+        // Prefer left calendar, then right
+        if (!tryFocus(SideEnum.left)) {
+            tryFocus(SideEnum.right);
+        }
     }
 
     hide(e?) {
@@ -1304,5 +1343,142 @@ export class DaterangepickerComponent implements OnInit {
         }
         const cls: string = sideVars.classes[row][col] as string;
         return cls.includes('active') || cls.includes('in-range');
+    }
+
+    /**
+     * Determines tabindex for a calendar cell – only start & end (or single active) dates
+     * get 0 so they are reachable via TAB, rest are -1.
+     */
+    getTabIndex(side: SideEnum, row: number, col: number): number {
+        const date = this.calendarVariables?.[side]?.calendar?.[row]?.[col];
+        if (!date) {
+            return -1;
+        }
+        if (this.startDate && date.isSame(this.startDate, 'day')) {
+            return 0;
+        }
+        if (this.endDate && date.isSame(this.endDate, 'day')) {
+            return 0;
+        }
+        // In single date mode, endDate is same as startDate; above covers.
+        return -1;
+    }
+
+    /**
+     * Keyboard navigation handler for an individual calendar cell.
+     * Supports arrow keys, page up/down, ctrl+arrow and enter to select a day.
+     */
+    handleDayKeydown(event: KeyboardEvent, side: SideEnum, row: number, col: number): void {
+        const key = event.key;
+
+        // Global shortcuts to close the picker
+        if ((event.altKey && key === 'ArrowUp') || key === 'Escape') {
+            event.preventDefault();
+            this.hide();
+            return;
+        }
+
+        const currentDate = this.calendarVariables[side].calendar[row][col].clone();
+        let targetDate: _moment.Moment | null = null;
+
+        switch (key) {
+            case 'ArrowLeft':
+                event.preventDefault();
+                if (event.ctrlKey) {
+                    this.clickPrev(side);
+                    targetDate = currentDate.clone().subtract(1, 'month');
+                } else {
+                    targetDate = currentDate.clone().subtract(1, 'day');
+                }
+                break;
+            case 'ArrowRight':
+                event.preventDefault();
+                if (event.ctrlKey) {
+                    this.clickNext(side);
+                    targetDate = currentDate.clone().add(1, 'month');
+                } else {
+                    targetDate = currentDate.clone().add(1, 'day');
+                }
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                targetDate = currentDate.clone().subtract(7, 'day');
+                break;
+            case 'ArrowDown':
+                event.preventDefault();
+                targetDate = currentDate.clone().add(7, 'day');
+                break;
+            case 'PageUp':
+                event.preventDefault();
+                this.clickPrev(side);
+                targetDate = currentDate.clone().subtract(1, 'month');
+                break;
+            case 'PageDown':
+                event.preventDefault();
+                this.clickNext(side);
+                targetDate = currentDate.clone().add(1, 'month');
+                break;
+            case 'Enter':
+            case ' ': // space
+                event.preventDefault();
+                this.clickDate(event, side, row, col);
+                return;
+            default:
+                return;
+        }
+
+        if (targetDate) {
+            this.moveFocusToDate(targetDate);
+        }
+    }
+
+    /**
+     * Ensures the provided date is visible (updates calendars if necessary) and focuses its cell.
+     */
+    private moveFocusToDate(date: _moment.Moment): void {
+        // Bring date into view if outside current months.
+        const makeVisible = (): void => {
+            let adjusted = false;
+            // If date is before left calendar month
+            while (date.isBefore(this.leftCalendar.month, 'month')) {
+                this.clickPrev(SideEnum.left);
+                adjusted = true;
+            }
+            // If date is after right calendar month (or left in single)
+            while (date.isAfter(this.rightCalendar.month.clone().endOf('month'), 'day')) {
+                this.clickNext(SideEnum.right);
+                adjusted = true;
+            }
+            if (adjusted) {
+                // allow DOM to update
+                setTimeout(() => this.focusDateCellIfVisible(date));
+            } else {
+                this.focusDateCellIfVisible(date);
+            }
+        };
+
+        makeVisible();
+    }
+
+    /** Focuses the cell for the date if it exists in DOM */
+    private focusDateCellIfVisible(date: _moment.Moment): void {
+        const sides = [SideEnum.left, SideEnum.right];
+        for (const s of sides) {
+            const calVars = this.calendarVariables?.[s];
+            if (!calVars) continue;
+            for (const r of calVars.calRows) {
+                for (const c of calVars.calCols) {
+                    const cellDate = calVars.calendar[r][c];
+                    if (cellDate && cellDate.isSame(date, 'day')) {
+                        const selector = `[data-side="${s}"][data-row="${r}"][data-col="${c}"]`;
+                        const cell: HTMLElement | null = this.pickerContainer?.nativeElement.querySelector(selector);
+                        if (cell) {
+                            cell.focus();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
