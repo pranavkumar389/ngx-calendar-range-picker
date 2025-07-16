@@ -1,6 +1,6 @@
 {
   "name": "ngx-calendar-range-picker",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Angular 9 and 10 date range picker (with material design theme)",
   "keywords": [
     "angular2",
@@ -21,7 +21,7 @@
     "moment",
     "picker"
   ],
-  "homepage": "",
+  "homepage": "https://github.com/pranavkumar389/ngx-calendar-range-picker",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -29,17 +29,17 @@
     "ng": "ng",
     "start": "ng serve",
     "demo:build": "ng build --prod",
-    "test": "ng test --watch=false",
+    "test": "./node_modules/.bin/ng test --watch=false",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "ngc": "ngc -p tsconfig.json",
+    "ngc": "./node_modules/.bin/ngc -p tsconfig.json",
     "gh-pages": "ng build --prod --base-href=\"/ngx-calendar-range-picker/\" && ngh --dir demo/dist",
     "build": "ng-packagr -p package.json"
   },
   "author": "Pranav Kumar",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pranavkumar389/ngx-calendar-range-picker.git"
+    "url": "https://github.com/pranavkumar389/ngx-calendar-range-picker.git"
   },
   "peerDependencies": {
     "moment": "^2.21.0"
@@ -60,7 +60,6 @@
     "@angular/router": "^9.1.0",
     "@types/jasmine": "~2.8.9",
     "@types/jasminewd2": "~2.0.3",
-    "@types/minimatch": "^3.0.5",
     "@types/node": "^12.11.1",
     "angular-cli-ghpages": "^0.5.2",
     "codelyzer": "^5.1.2",
@@ -95,8 +94,5 @@
   },
   "dependencies": {
     "tslib": "^1.10.0"
-  },
-  "bugs": {
-    "url": "https://github.com/pranavkumar389/ngx-calendar-range-picker/issues"
   }
 }

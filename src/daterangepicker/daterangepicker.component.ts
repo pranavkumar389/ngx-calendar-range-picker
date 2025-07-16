@@ -1,5 +1,4 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { HostListener } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _moment from 'moment';
 import { LocaleConfig } from './daterangepicker.config';
@@ -31,11 +30,6 @@ export class DaterangepickerComponent implements OnInit {
     chosenLabel: string;
     calendarVariables: {left: any, right: any} = {left: {}, right: {}};
     tooltiptext = [];  // for storing tooltiptext
-    /**
-     * Message announced to screen readers via aria-live region in template.
-     * Will be updated whenever date, month, or year changes.
-     */
-    liveMessage: string = '';
     timepickerVariables: {left: any, right: any} = {left: {}, right: {}};
     daterangepicker: {start: FormControl, end: FormControl} = {start: new FormControl(), end: new FormControl()};
     applyBtn: {disabled: boolean} = {disabled: false};
@@ -147,8 +141,6 @@ export class DaterangepickerComponent implements OnInit {
     @Output() startDateChanged: EventEmitter<Object>;
     @Output() endDateChanged: EventEmitter<Object>;
     @ViewChild('pickerContainer', { static: true }) pickerContainer: ElementRef;
-
-    private _triggerElement: HTMLElement | null = null;
 
     constructor(
         private el: ElementRef,
@@ -516,24 +508,13 @@ export class DaterangepickerComponent implements OnInit {
             if (this.timePicker && this.timePickerIncrement) {
                 this.startDate.minute(Math.round(this.startDate.minute() / this.timePickerIncrement) * this.timePickerIncrement);
             }
-            // Announce validation error
-            if (this.isShown) {
-                setTimeout(() => {
-                    this._announceValidationError('Date adjusted to minimum allowed date');
-                }, 100);
-            }
+
         }
 
         if (this.maxDate && this.startDate.isAfter(this.maxDate)) {
             this.startDate = this.maxDate.clone();
             if (this.timePicker && this.timePickerIncrement) {
                 this.startDate.minute(Math.floor(this.startDate.minute() / this.timePickerIncrement) * this.timePickerIncrement);
-            }
-            // Announce validation error
-            if (this.isShown) {
-                setTimeout(() => {
-                    this._announceValidationError('Date adjusted to maximum allowed date');
-                }, 100);
             }
         }
 
@@ -542,12 +523,6 @@ export class DaterangepickerComponent implements OnInit {
         }
         this.startDateChanged.emit({startDate: this.startDate});
         this.updateMonthsInView();
-        // Announce start date selection to screen readers
-        if (this.isShown) {
-            setTimeout(() => {
-                this._announceDateSelection(this.startDate, true);
-            }, 100);
-        }
     }
 
     setEndDate(endDate) {
@@ -575,12 +550,6 @@ export class DaterangepickerComponent implements OnInit {
 
         if (this.maxDate && this.endDate.isAfter(this.maxDate)) {
             this.endDate = this.maxDate.clone();
-            // Announce validation error
-            if (this.isShown) {
-                setTimeout(() => {
-                    this._announceValidationError('End date adjusted to maximum allowed date');
-                }, 100);
-            }
         }
 
         if (this.dateLimit && this.startDate.clone().add(this.dateLimit, 'day').isBefore(this.endDate)) {
@@ -593,18 +562,6 @@ export class DaterangepickerComponent implements OnInit {
         }
         this.endDateChanged.emit({endDate: this.endDate});
         this.updateMonthsInView();
-        // Announce end date selection to screen readers
-        if (this.isShown) {
-            setTimeout(() => {
-                this._announceDateSelection(this.endDate, false);
-                // If both dates are selected, announce the complete range
-                if (this.startDate && this.endDate) {
-                    setTimeout(() => {
-                        this._announceRangeSelection(this.startDate, this.endDate);
-                    }, 300);
-                }
-            }, 100);
-        }
     }
     @Input()
     isInvalidDate(date) {
@@ -897,10 +854,6 @@ export class DaterangepickerComponent implements OnInit {
             }
         }
         this.updateCalendars();
-        // Announce month/year change to screen readers
-        setTimeout(() => {
-            this._announceMonthYear(side);
-        }, 100);
     }
 
     /**
@@ -917,10 +870,6 @@ export class DaterangepickerComponent implements OnInit {
             this.rightCalendar.month.subtract(1, 'month');
         }
         this.updateCalendars();
-        // Announce month/year change to screen readers
-        setTimeout(() => {
-            this._announceMonthYear(side);
-        }, 100);
     }
     /**
      * Click on next month
@@ -936,10 +885,6 @@ export class DaterangepickerComponent implements OnInit {
             }
         }
         this.updateCalendars();
-        // Announce month/year change to screen readers
-        setTimeout(() => {
-            this._announceMonthYear(side);
-        }, 100);
     }
 
     /**
@@ -1097,11 +1042,6 @@ export class DaterangepickerComponent implements OnInit {
         this._old.end = this.endDate.clone();
         this.isShown = true;
         this.updateView();
-        this._triggerElement = (e?.currentTarget as HTMLElement) || (document.activeElement as HTMLElement);
-        // After view updates, move focus into the picker
-        setTimeout(() => {
-            this._setInitialFocus();
-        });
     }
 
     hide(e?) {
@@ -1127,75 +1067,7 @@ export class DaterangepickerComponent implements OnInit {
         this.updateElement();
         this.isShown = false;
         this._ref.detectChanges();
-        // restore focus to trigger element
-        if (this._triggerElement) {
-            setTimeout(() => this._triggerElement?.focus());
-        }
-    }
 
-    /** Focus trap: handle Tab within picker */
-    @HostListener('keydown', ['$event'])
-    _handleDialogKeydown(event: KeyboardEvent): void {
-        if (!this.isShown || this.inline) { return; }
-        if (event.key !== 'Tab') { return; }
-        const focusable = this._getFocusableElements();
-        if (!focusable.length) { return; }
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (event.shiftKey) {
-            if (document.activeElement === first) {
-                event.preventDefault();
-                last.focus();
-            }
-        } else {
-            if (document.activeElement === last) {
-                event.preventDefault();
-                first.focus();
-            }
-        }
-    }
-
-    private _setInitialFocus(): void {
-        // Priority order for initial focus:
-        // 1. Selected date cell
-        // 2. First time picker select (if timePicker is enabled)
-        // 3. First range button (if ranges are available)
-        // 4. First focusable element
-
-        const selectedCell: HTMLElement | null = this.pickerContainer.nativeElement.querySelector('[aria-selected="true"]');
-        if (selectedCell) {
-            selectedCell.focus();
-            return;
-        }
-
-        // If time picker is enabled, focus first time select
-        if (this.timePicker) {
-            const firstTimeSelect: HTMLElement | null = this.pickerContainer.nativeElement.querySelector('.calendar-time select:not([disabled])');
-            if (firstTimeSelect) {
-                firstTimeSelect.focus();
-                return;
-            }
-        }
-
-        // If ranges are available, focus first range button
-        if (this.rangesArray.length > 0) {
-            const firstRangeButton: HTMLElement | null = this.pickerContainer.nativeElement.querySelector('.ranges button:not([disabled])');
-            if (firstRangeButton) {
-                firstRangeButton.focus();
-                return;
-            }
-        }
-
-        // Default to first focusable element
-        const firstFocusable = this._getFocusableElements()[0];
-        firstFocusable?.focus();
-    }
-
-    private _getFocusableElements(): HTMLElement[] {
-        const elements = this.pickerContainer.nativeElement.querySelectorAll(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        ) as NodeListOf<HTMLElement>;
-        return Array.from(elements).filter((el: HTMLElement) => !el.hasAttribute('disabled') && el.offsetParent !== null);
     }
 
     /**
@@ -1418,124 +1290,5 @@ export class DaterangepickerComponent implements OnInit {
             }
             this.calendarVariables[side].classes[row].classList = rowClasses.join(' ');
         }
-    }
-
-    /** Accessibility helpers */
-    private _announce(message: string): void {
-        this.liveMessage = message;
-        // trigger change detection so assistive tech reads it
-        this._ref.markForCheck();
-    }
-
-    /** Enhanced accessibility announcements */
-    private _announceMonthYear(side: SideEnum): void {
-        const calendar = this.calendarVariables[side];
-        if (calendar && calendar.calendar && calendar.calendar[1] && calendar.calendar[1][1]) {
-            const monthYear = calendar.calendar[1][1];
-            const monthName = this.locale.monthNames[monthYear.month()];
-            const year = monthYear.year();
-            const sideText = this.singleDatePicker ? '' : (side === SideEnum.left ? ' left calendar' : ' right calendar');
-            this._announce(`${monthName} ${year}${sideText}`);
-        }
-    }
-
-    private _announceDateSelection(date: _moment.Moment, isStart: boolean): void {
-        const dateStr = date.format(this.locale.displayFormat || 'MMMM D, YYYY');
-        const type = isStart ? 'Start date' : 'End date';
-        this._announce(`${type} selected: ${dateStr}`);
-    }
-
-    private _announceRangeSelection(startDate: _moment.Moment, endDate: _moment.Moment): void {
-        const startStr = startDate.format(this.locale.displayFormat || 'MMMM D, YYYY');
-        const endStr = endDate.format(this.locale.displayFormat || 'MMMM D, YYYY');
-        this._announce(`Date range selected: ${startStr} to ${endStr}`);
-    }
-
-    private _announceValidationError(message: string): void {
-        this._announce(`Error: ${message}`);
-    }
-
-    isDateSelected(date: _moment.Moment): boolean {
-        if (!date) { return false; }
-        if (this.singleDatePicker) {
-            return this.startDate && date.isSame(this.startDate, 'day');
-        }
-        return (
-            (this.startDate && date.isSame(this.startDate, 'day')) ||
-            (this.endDate && date.isSame(this.endDate, 'day'))
-        );
-    }
-
-    isToday(date: _moment.Moment): boolean {
-        return date && date.isSame(moment(), 'day');
-    }
-
-    isCellDisabled(date: _moment.Moment): boolean {
-        return this.isInvalidDate(date) || (this.minDate && date.isBefore(this.minDate, 'day')) || (this.maxDate && date.isAfter(this.maxDate, 'day'));
-    }
-
-    /**
-     * Keyboard handling for grid cells
-     */
-    onCellKeydown(event: KeyboardEvent, side: SideEnum, row: number, col: number): void {
-        const key = event.key;
-        const dayMovement = {
-            ArrowLeft: -1,
-            ArrowRight: 1,
-            ArrowUp: -7,
-            ArrowDown: 7
-        } as { [k: string]: number };
-
-        if (key in dayMovement) {
-            event.preventDefault();
-            const offset = dayMovement[key];
-            const newDate = this.calendarVariables[side].calendar[row][col].clone().add(offset, 'day');
-            // if date crosses panel boundary, update calendars
-            if (newDate.isBefore(this.calendarVariables[side].firstDay) || newDate.isAfter(this.calendarVariables[side].lastDay)) {
-                if (offset < 0) {
-                    this.clickPrev(side);
-                } else {
-                    this.clickNext(side);
-                }
-            }
-            // after calendar update, focus the appropriate cell
-            setTimeout(() => {
-                this._focusDate(newDate);
-            });
-        } else if (key === 'Home') {
-            event.preventDefault();
-            const firstCellDate = this.calendarVariables[side].calendar[0][0];
-            this._focusDate(firstCellDate);
-        } else if (key === 'End') {
-            event.preventDefault();
-            const lastCellDate = this.calendarVariables[side].calendar[5][6];
-            this._focusDate(lastCellDate);
-        } else if (key === 'PageUp') {
-            event.preventDefault();
-            this.clickPrev(side);
-        } else if (key === 'PageDown') {
-            event.preventDefault();
-            this.clickNext(side);
-        } else if (key === 'Enter' || key === ' ') {
-            event.preventDefault();
-            this.clickDate(event, side, row, col);
-        } else if (key === 'Escape') {
-            this.hide();
-        }
-    }
-
-    private _focusDate(date: _moment.Moment): void {
-        setTimeout(() => {
-            const container: HTMLElement = this.pickerContainer.nativeElement;
-            const prevFocused = container.querySelector<HTMLElement>('td[role="gridcell"][tabindex="0"]');
-            if (prevFocused) {
-                prevFocused.setAttribute('tabindex', '-1');
-            }
-            const cell: HTMLElement | null = container.querySelector(`[data-date="${date.format('YYYY-MM-DD')}"]`);
-            if (cell) {
-                cell.setAttribute('tabindex', '0');
-                cell.focus();
-            }
-        });
     }
 }

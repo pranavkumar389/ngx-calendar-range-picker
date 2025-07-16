@@ -8,16 +8,6 @@ This `Angular Material` plugin is compatible with Angular 2+ and is Ivy compatib
 
 ---
 
-## Versions
-
-| Angular| ngx-calendar-range-picker|
-| ------|:------:| 
-| >=9.0.0  | v4.x.x |
-| <9.0.0  | v2.x.x |
-| ~~>=9.0.0 depends on @angular/material~~ |~~v3.x~~ |
-
----
-
 ## Installation
 
  Install the plugin from npm:
@@ -279,5 +269,5 @@ Open `http//:localhost:4200` on your browser.
 Run `npm test` or `ng test` to run tests.
 
 
-## [License](https://github.com/pranavkumar389/ngx-calendar-range-picker/commits/main/LICENSE)
+## [License](https://github.com/pranavkumar389/ngx-calendar-range-picker/blob/master/LICENSE)
 MIT
