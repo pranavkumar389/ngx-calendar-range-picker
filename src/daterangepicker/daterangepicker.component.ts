@@ -1060,7 +1060,10 @@ export class DaterangepickerComponent implements OnInit {
         this.updateView();
 
         // After calendar is rendered, move focus to the selected start day for better keyboard UX
-        setTimeout(() => this.focusSelectedStartDateCell());
+        setTimeout(() => {
+            this.focusSelectedStartDateCell();
+            this.toggleFocusTrapAnchors(true);
+        });
     }
 
     /**
@@ -1123,6 +1126,8 @@ export class DaterangepickerComponent implements OnInit {
         this.isShown = false;
         this._ref.detectChanges();
 
+        // disable anchors
+        this.toggleFocusTrapAnchors(false);
     }
 
     /**
@@ -1378,6 +1383,9 @@ export class DaterangepickerComponent implements OnInit {
             return 0;
         }
         // In single date mode, endDate is same as startDate; above covers.
+        if (!this.isShown && !this.inline) {
+            return -1;
+        }
         return -1;
     }
 
@@ -1497,5 +1505,14 @@ export class DaterangepickerComponent implements OnInit {
                 }
             }
         }
+    }
+
+    /** Enable or disable focus-trap anchor elements to keep them out of tab order when hidden */
+    private toggleFocusTrapAnchors(enable: boolean): void {
+        const anchors: NodeListOf<HTMLElement> = this.el.nativeElement.parentElement.querySelectorAll('.cdk-focus-trap-anchor');
+        anchors.forEach(a => {
+            a.tabIndex = enable ? 0 : -1;
+            a.setAttribute('aria-hidden', enable ? 'false' : 'true');
+        });
     }
 }

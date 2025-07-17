@@ -1,6 +1,6 @@
 <div
   class="md-drppicker"
-  #pickerContainer cdkTrapFocus [cdkTrapFocusAutoCapture]="!inline"
+  #pickerContainer cdkTrapFocus [cdkTrapFocusAutoCapture]="!inline" [cdkTrapFocusDisabled]="!isShown" [attr.inert]="!isShown && !inline ? '' : null"
   [ngClass]="{
     ltr: locale.direction === 'ltr',
     rtl: this.locale.direction === 'rtl',
@@ -22,6 +22,7 @@
         <button
           role="option"
           type="button"
+          [attr.tabindex]="isShown ? 0 : -1"
           (click)="clickRange($event, range)"
           [disabled]="disableRange(range)"
           [ngClass]="{ active: range === chosenRange }"
@@ -52,7 +53,7 @@
               "
             >
               <th
-                role="button" tabindex="0"
+                role="button" [attr.tabindex]="isShown ? 0 : -1"
                 aria-label="Previous month"
                 (click)="clickPrev(sideEnum.left)"
                 (keydown.enter)="clickPrev(sideEnum.left)"
@@ -146,7 +147,7 @@
               "
             >
               <th
-                role="button" tabindex="0"
+                role="button" [attr.tabindex]="isShown ? 0 : -1"
                 aria-label="Next month"
                 (click)="clickNext(sideEnum.left)"
                 (keydown.enter)="clickNext(sideEnum.left)"
@@ -310,7 +311,7 @@
               "
             >
               <th
-                role="button" tabindex="0"
+                role="button" [attr.tabindex]="isShown ? 0 : -1"
                 aria-label="Previous month"
                 (click)="clickPrev(sideEnum.right)"
                 (keydown.enter)="clickPrev(sideEnum.right)"
@@ -406,7 +407,7 @@
               "
             >
               <th
-                role="button" tabindex="0"
+                role="button" [attr.tabindex]="isShown ? 0 : -1"
                 aria-label="Next month"
                 (click)="clickNext(sideEnum.right)"
                 (keydown.enter)="clickNext(sideEnum.right)"
@@ -569,6 +570,7 @@
         type="button"
         (click)="clear()"
         [title]="locale.clearLabel"
+        [attr.tabindex]="isShown ? 0 : -1"
       >
         {{ locale.clearLabel }}
         <svg
@@ -587,6 +589,7 @@
         *ngIf="showCancel"
         type="button"
         (click)="clickCancel($event)"
+        [attr.tabindex]="isShown ? 0 : -1"
       >
         {{ locale.cancelLabel }}
       </button>
@@ -595,6 +598,7 @@
         [disabled]="applyBtn.disabled"
         type="button"
         (click)="clickApply($event)"
+        [attr.tabindex]="isShown ? 0 : -1"
       >
         {{ locale.applyLabel }}
       </button>
