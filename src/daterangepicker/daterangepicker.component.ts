@@ -3,6 +3,7 @@ import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _moment from 'moment';
 import { LocaleConfig } from './daterangepicker.config';
 import { LocaleService } from './locale.service';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
 
 const moment = _moment;
 
@@ -145,13 +146,19 @@ export class DaterangepickerComponent implements OnInit {
     constructor(
         private el: ElementRef,
         private _ref: ChangeDetectorRef,
-        private _localeService: LocaleService
+        private _localeService: LocaleService,
+        private _liveAnnouncer: LiveAnnouncer
     ) {
         this.choosedDate = new EventEmitter();
         this.rangeClicked = new EventEmitter();
         this.datesUpdated = new EventEmitter();
         this.startDateChanged = new EventEmitter();
         this.endDateChanged = new EventEmitter();
+    }
+
+    /** Helper: announce a message to screen-reader users */
+    private announce(msg: string): void {
+        this._liveAnnouncer.announce(msg);
     }
 
     ngOnInit() {
@@ -698,6 +705,7 @@ export class DaterangepickerComponent implements OnInit {
     }
 
     clickApply(e?) {
+        this.announce('Date range applied');
         if (!this.singleDatePicker && this.startDate && !this.endDate) {
             this.endDate = this._getDateWithTime(this.startDate, SideEnum.right);
 
@@ -726,6 +734,7 @@ export class DaterangepickerComponent implements OnInit {
     }
 
     clickCancel(e) {
+        this.announce('Selection cancelled');
         this.startDate = this._old.start;
         this.endDate = this._old.end;
         if (this.inline) {
@@ -971,6 +980,13 @@ export class DaterangepickerComponent implements OnInit {
           this.clickApply();
         }
 
+        // Announce selection changes
+        if (this.startDate && !this.endDate) {
+            this.announce(`Start date selected ${this.startDate.format(this.locale.format)}`);
+        } else if (this.startDate && this.endDate) {
+            this.announce(`End date selected ${this.endDate.format(this.locale.format)}`);
+        }
+
         // This is to cancel the blur event handler if the mouse was in one of the inputs
         e.stopPropagation();
 
@@ -1134,6 +1150,7 @@ export class DaterangepickerComponent implements OnInit {
      *  clear the daterange picker
      */
     clear() {
+        this.announce('Dates cleared');
         this.startDate = moment().startOf('day');
         this.endDate = moment().endOf('day');
         this.choosedDate.emit({chosenLabel: '', startDate: null, endDate: null});
