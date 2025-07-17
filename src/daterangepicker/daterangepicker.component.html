@@ -1,6 +1,6 @@
 <div
   class="md-drppicker"
-  #pickerContainer cdkTrapFocus [cdkTrapFocusAutoCapture]="!inline" [cdkTrapFocusDisabled]="!isShown" [attr.inert]="!isShown && !inline ? '' : null"
+  #pickerContainer cdkTrapFocus [cdkTrapFocusAutoCapture]="!inline" [attr.inert]="!isShown && !inline ? '' : null"
   [ngClass]="{
     ltr: locale.direction === 'ltr',
     rtl: this.locale.direction === 'rtl',
