@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild, ViewEncapsulation, HostListener } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _moment from 'moment';
 import { LocaleConfig } from './daterangepicker.config';
@@ -28,6 +28,7 @@ export enum SideEnum {
 })
 export class DaterangepickerComponent implements OnInit {
     private _old: {start: any, end: any} = {start: null, end: null};
+    private _previousFocus: HTMLElement | null = null;
     chosenLabel: string;
     calendarVariables: {left: any, right: any} = {left: {}, right: {}};
     tooltiptext = [];  // for storing tooltiptext
@@ -1060,7 +1061,8 @@ export class DaterangepickerComponent implements OnInit {
     show(e?) {
         if (this.isShown) { return; }
         this._old.start = this.startDate.clone();
-        this._old.end = this.endDate.clone();
+        // Remember element that opened the dialog to restore focus later
+        this._previousFocus = (document.activeElement as HTMLElement) ?? null;
         this.isShown = true;
         this.updateView();
 
@@ -1122,7 +1124,8 @@ export class DaterangepickerComponent implements OnInit {
         }
 
         // if a new date range was selected, invoke the user callback function
-        if (!this.startDate.isSame(this._old.start) || !this.endDate.isSame(this._old.end)) {
+        if (this.startDate && this._old.start && this.endDate && this._old.end &&
+            (!this.startDate.isSame(this._old.start) || !this.endDate.isSame(this._old.end))) {
            // this.callback(this.startDate, this.endDate, this.chosenLabel);
         }
 
@@ -1130,6 +1133,12 @@ export class DaterangepickerComponent implements OnInit {
         this.updateElement();
         this.isShown = false;
         this._ref.detectChanges();
+
+        // Restore focus to initiator
+        if (this._previousFocus) {
+            this._previousFocus.focus();
+            this._previousFocus = null;
+        }
 
         // disable anchors
         this.toggleFocusTrapAnchors(false);
@@ -1160,7 +1169,6 @@ export class DaterangepickerComponent implements OnInit {
      *  clear the daterange picker
      */
     clear() {
-        this.announce('Dates cleared');
         this.startDate = moment().startOf('day');
         this.endDate = moment().endOf('day');
         this.choosedDate.emit({chosenLabel: '', startDate: null, endDate: null});
@@ -1519,5 +1527,14 @@ export class DaterangepickerComponent implements OnInit {
             a.tabIndex = enable ? 0 : -1;
             a.setAttribute('aria-hidden', enable ? 'false' : 'true');
         });
+    }
+
+    // Close the picker when Escape is pressed while popup is open
+    @HostListener('keydown.escape', ['$event'])
+    onEsc(event: KeyboardEvent): void {
+        if (this.isShown && !this.inline) {
+            event.preventDefault();
+            this.hide();
+        }
     }
 }
