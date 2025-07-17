@@ -1,5 +1,8 @@
 # ngx-calendar-range-picker
 
+> ⚠️ **Disclaimer:** This library is **no longer actively maintained** (maintenance mode). Use it at your own risk.  
+> 🚀 **Heads-up:** Version 2 is currently under active development with enhanced UX/UI, improved accessibility (a11y), and compatibility with the latest Angular.
+
 > Angular 2+ Date range picker.
 
 This `Angular Material` plugin is compatible with Angular 2+ and is Ivy compatible. It leverages `moment.js` to handle date manipulation and parsing. The base for this plugin was originally the [Bootstrap Date Range Picker](http://www.daterangepicker.com), but its dependencies on jQuery and Bootstrap were removed. `Angular Material` themes are fully supported since v3.0.0, so you can just drop this component into an existing Material project and it will blend right into your application.
