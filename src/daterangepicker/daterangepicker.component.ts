@@ -193,6 +193,11 @@ export class DaterangepickerComponent implements OnInit {
         this.renderCalendar(SideEnum.left);
         this.renderCalendar(SideEnum.right);
         this.renderRanges();
+
+        // Ensure focus-trap anchors are not tabbable when picker starts closed
+        if (!this.isShown && !this.inline) {
+            setTimeout(() => this.toggleFocusTrapAnchors(false));
+        }
     }
     renderRanges() {
         this.rangesArray = [];
@@ -1509,7 +1514,7 @@ export class DaterangepickerComponent implements OnInit {
 
     /** Enable or disable focus-trap anchor elements to keep them out of tab order when hidden */
     private toggleFocusTrapAnchors(enable: boolean): void {
-        const anchors: NodeListOf<HTMLElement> = this.el.nativeElement.parentElement.querySelectorAll('.cdk-focus-trap-anchor');
+        const anchors: NodeListOf<HTMLElement> = this.el.nativeElement.querySelectorAll('.cdk-focus-trap-anchor');
         anchors.forEach(a => {
             a.tabIndex = enable ? 0 : -1;
             a.setAttribute('aria-hidden', enable ? 'false' : 'true');
